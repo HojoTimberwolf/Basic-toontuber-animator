@@ -366,18 +366,21 @@ class animation_builder(animator_class):
         self.generate_video(img_list,"set_{stance}_{emotion}.mp4".format(stance=stance,emotion=emotion))
 
 
-# emotion_list = ["angry","derp","happy","jolly","sigh","surprised","think"]
-# stance_list = ["normal","game","casual"]
 
-emotion_list = ["angry"]
-stance_list = ["normal"]
-
-ac = animation_framer()
-ab = animation_builder(ac)    
-for emotion in emotion_list:
-    for stance in stance_list:
-#        ab.build_idle_animation(emotion=emotion,stance=stance)    
-#        ab.build_talking_animation(emotion=emotion,stance=stance)
-        ab.build_set_animation(emotion=emotion,stance=stance)
+if __name__ == "__main__":
+    
+    # emotion_list = ["angry","derp","happy","jolly","sigh","surprised","think"]
+    # stance_list = ["normal","game","casual"]
+    
+    emotion_list = ["angry"]
+    stance_list = ["normal"]
+    
+    ac = animation_framer()
+    ab = animation_builder(ac)    
+    for emotion in emotion_list:
+        for stance in stance_list:
+            ab.build_idle_animation(emotion=emotion,stance=stance)    
+            ab.build_talking_animation(emotion=emotion,stance=stance)
+            ab.build_set_animation(emotion=emotion,stance=stance)
 
 
