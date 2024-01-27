@@ -92,7 +92,7 @@ class animator_class():
 
         return np.array(res).reshape(8)
     
-    def generate_video(self,img_list,video_name):
+    def generate_video(self, img_list, video_name):
         """
         Converts a list of still images into an mp4
     
@@ -171,20 +171,24 @@ class animator_class():
         def_height = height/4
 
         img_list = []        
+
         for n in range(0,animation_length):
             bkgd = Image.new("RGB",img_size, bkgd_color)
+
             for layer in layering:
                 if layering[layer]["length"] == 1:
                     im_overlay = Image.open(os.path.join(layering[layer]["directory"],
                                                          layering[layer]["file_names"]))
+
                 else:
                     if layering[layer]["current_frame"] > layering[layer]["length"]:
                         layering[layer].update({"current_frame":0})
                     
                     im_overlay = Image.open(os.path.join(layering[layer]["directory"],
                                                          layering[layer]["file_names"][layering[layer]["current_frame"]]))
-                    layering[layer].update({"current_frame":layering[layer]["current_frame"] + 1})
-                bkgd.paste(im_overlay,(0,0),im_overlay)
+                    layering[layer].update({"current_frame" : layering[layer]["current_frame"] + 1})
+
+                bkgd.paste(im_overlay, (0, 0), im_overlay)
 
             if bounce != None:
                 coeffs = self.find_coeffs(
