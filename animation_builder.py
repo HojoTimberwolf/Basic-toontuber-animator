@@ -10,21 +10,43 @@ Created on Wed Nov 29 00:38:39 2023
 
 @author: Hojo
 """
+
 from PIL import Image
 import cv2
 import os
 import numpy as np
 
 class animation_framer():
-    def __init__(self,img_size=(1583,1776), bkgd_color = (0,204,0),keyframe_loc = None):
+    def __init__(self, img_size = (1583, 1776), bkgd_color = (0, 204, 0), keyframe_loc = None):
+
         # variables
         if keyframe_loc is None:            
             self.keyframe_loc = {
-                "tail":{"length":1,"directory":r".\animation_builder\Key_frames\{emotion}\Additional","file_names":"FX_Tail.png"},
-                "body":{"length":1,"directory":r".\animation_builder\Key_frames\{emotion}\Poses","file_names":"FX_pose_{stance}.png"},
-                "eyes":{"length":1,"directory":r".\animation_builder\Key_frames\{emotion}\Additional","file_names":"FX_eyes.png"},
-                "VR":{"length":1,"directory":r".\animation_builder\Key_frames\{emotion}\Additional","file_names":"FX_VR.png"},
-                "VR_eyes":{"length":1,"directory":r".\animation_builder\Key_frames\{emotion}\Additional","file_names":"FX_VR_eyes.png"}
+                "tail":{
+                        "length" : 1,
+                        "directory" : r".\animation_builder\Key_frames\{emotion}\Additional",
+                        "file_names" : "FX_Tail.png"
+                        },
+                "body":{
+                        "length" : 1,
+                        "directory" : r".\animation_builder\Key_frames\{emotion}\Poses",
+                        "file_names" : "FX_pose_{stance}.png"
+                        },
+                "eyes":{
+                        "length" : 1,
+                        "directory" : r".\animation_builder\Key_frames\{emotion}\Additional",
+                        "file_names" : "FX_eyes.png"
+                        },
+                "VR":{
+                        "length" : 1,
+                        "directory" : r".\animation_builder\Key_frames\{emotion}\Additional",
+                        "file_names" : "FX_VR.png"
+                        },
+                "VR_eyes":{
+                        "length" : 1,
+                        "directory" : r".\animation_builder\Key_frames\{emotion}\Additional",
+                        "file_names" : "FX_VR_eyes.png"
+                        }
                 }
         else:
             self.keyframe_loc = keyframe_loc
@@ -32,12 +54,14 @@ class animation_framer():
         self.img_size = img_size
         self.bkgd_color = bkgd_color    
 
-class animator_class():
-        
-    ####
-    # Functions
-    ####
-    def find_coeffs(self,pa, pb):
+class animator_class(): 
+    """
+    
+    The Functions that will build the image sets
+    
+    """
+    
+    def find_coeffs(self, pa, pb):
         """
         Code copied from StackOverflow that finds coefficients for transforamtion
     
@@ -54,7 +78,9 @@ class animator_class():
             transforms image based on selected points
     
         """
+        
         matrix = []
+
         for p1, p2 in zip(pa, pb):
             matrix.append([p1[0], p1[1], 1, 0, 0, 0, -p2[0]*p1[0], -p2[0]*p1[1]])
             matrix.append([0, 0, 0, p1[0], p1[1], 1, -p2[1]*p1[0], -p2[1]*p1[1]])
@@ -63,6 +89,7 @@ class animator_class():
         B = np.array(pb).reshape(8)
     
         res = np.dot(np.linalg.inv(A.T * A) * A.T, B)
+
         return np.array(res).reshape(8)
     
     def generate_video(self,img_list,video_name):
@@ -85,6 +112,7 @@ class animator_class():
         
         fourcc = cv2.VideoWriter_fourcc(*'divx')
         width,height = img_list[0].size
+
         video = cv2.VideoWriter(video_name,fourcc,24,(width,height))
         
         for image in img_list:
@@ -116,25 +144,30 @@ class animator_class():
             example:
             
             layering = {
-                "tail":{"length":len(tail_idle_animation), # the overall length of the animation layer
+                    "tail":{
+                        "length":len(tail_idle_animation), # the overall length of the animation layer
                         "directory":tail_loc, # the location of the frames for the animation layer
                         "file_names":tail_idle_animation, # a list of the frame file names
-                        "current_frame":0} # the frame to start on (usually 0)
-                }
+                        "current_frame":0 # the frame to start on (usually 0)
+                            } 
+                       }
+
         bounce : LIST
             Warping of frames to simulate talking
             [0,2,4] : :a good default for a 3 frame talking animation
 
+
         Returns
         -------
-        frames : TYPE
-            DESCRIPTION.
+        frames : List
+            Retursn a compile list of images based on the layers provided
 
         """
+
         if layering is None:
             raise ValueError("A layering dictionary needs to be input")
 
-        width,height = img_size
+        width, height = img_size
         def_height = height/4
 
         img_list = []        
@@ -142,12 +175,14 @@ class animator_class():
             bkgd = Image.new("RGB",img_size, bkgd_color)
             for layer in layering:
                 if layering[layer]["length"] == 1:
-                    im_overlay = Image.open(os.path.join(layering[layer]["directory"],layering[layer]["file_names"]))
+                    im_overlay = Image.open(os.path.join(layering[layer]["directory"],
+                                                         layering[layer]["file_names"]))
                 else:
                     if layering[layer]["current_frame"] > layering[layer]["length"]:
                         layering[layer].update({"current_frame":0})
                     
-                    im_overlay = Image.open(os.path.join(layering[layer]["directory"],layering[layer]["file_names"][layering[layer]["current_frame"]]))
+                    im_overlay = Image.open(os.path.join(layering[layer]["directory"],
+                                                         layering[layer]["file_names"][layering[layer]["current_frame"]]))
                     layering[layer].update({"current_frame":layering[layer]["current_frame"] + 1})
                 bkgd.paste(im_overlay,(0,0),im_overlay)
 
@@ -164,14 +199,19 @@ class animator_class():
     
 
 class animation_builder(animator_class):
-    def __init__(self,animation_framer):
+    """
+    Animation builder class inputs the framer class as uses the pointers as a
+    base in building the movies
+    """
+
+    def __init__(self, animation_framer):
         # variables
         self.animation_framer = animation_framer
             
     
-    def build_idle_animation(self,emotion="happy",stance="normal",layering = None,idle_delay = 165):
+    def build_idle_animation(self, emotion = "happy", stance = "normal", layering = None, idle_delay = 165):
         """
-        
+        Builds the idle animation. if layering not provided, will look for standardized locations
 
         Parameters
         ----------
@@ -203,19 +243,37 @@ class animation_builder(animator_class):
         """
         
         if layering is None:
+            # Lowest Layer
             tail_loc = r".\animation_builder\Idle_animation\{emotion}\Tail".format(emotion=emotion)
             tail_idle_animation = os.listdir(tail_loc)
-            vreyes_loc = r".\animation_builder\Idle_animation\{emotion}\VR_Eyes".format(emotion=emotion)
-            vr_eye_animation = os.listdir(vreyes_loc)                    
+            
+            # 2md Lowest Layer
             body_frame = self.animation_framer.keyframe_loc["body"]
             body_frame.update({"directory":body_frame["directory"].format(emotion=emotion)})
             body_frame.update({"file_names":body_frame["file_names"].format(stance=stance)})
+            
+            # 2nd most Upper Layer
             vr_frame = self.animation_framer.keyframe_loc["VR"]
             vr_frame.update({"directory":vr_frame["directory"].format(emotion=emotion)})
-            layering = {"tail":{"length":len(tail_idle_animation),"directory":tail_loc,"file_names":tail_idle_animation,"current_frame":0},
-                       "body":body_frame,
-                       "VR":vr_frame,
-                       "VR_eyes":{"length":len(vr_eye_animation),"directory":vreyes_loc,"file_names":vr_eye_animation,"current_frame":0}
+
+            # Top Layer
+            vreyes_loc = r".\animation_builder\Idle_animation\{emotion}\VR_Eyes".format(emotion=emotion)
+            vr_eye_animation = os.listdir(vreyes_loc)
+
+            # Layering Dict
+            layering = {"tail" : {
+                                "length" : len(tail_idle_animation),
+                                "directory" : tail_loc,
+                                "file_names" : tail_idle_animation,"current_frame":0
+                                },
+                       "body" : body_frame,
+                       "VR" : vr_frame,
+                       "VR_eyes" : {
+                           "length" : len(vr_eye_animation),
+                           "directory" : vreyes_loc,
+                           "file_names" : vr_eye_animation,
+                           "current_frame" : 0
+                           }
                        }
         
         output_frames = self.compile_frames(animation_length = len(vr_eye_animation),
@@ -224,7 +282,7 @@ class animation_builder(animator_class):
                                             layering = layering)
        
         last_frame = output_frames[-1]    
-        for x in range(0,idle_delay,1):
+        for x in range(0, idle_delay, 1):
             output_frames.append(last_frame)
             
         # img_list[0].save("an.gif",format="gif",append_images=img_list[1:],optimize=False,save_all=True,duration=64,loop=0)
@@ -232,7 +290,7 @@ class animation_builder(animator_class):
         
         return -1
 
-    def build_talking_animation(self,emotion="happy",stance="normal",layering = None, bounce=[0,2,4]):
+    def build_talking_animation(self, emotion = "happy", stance = "normal", layering = None, bounce=[0, 2, 4]):
         """
         Build talking and peak animation files
 
@@ -252,20 +310,35 @@ class animation_builder(animator_class):
         """
         
         if layering is None:
-            vreyes_loc = r".\animation_builder\talk_animation\{emotion}\VR_Eyes".format(emotion=emotion)
-            vr_eye_animation = os.listdir(vreyes_loc)            
-            
+
+            # Lowest Layer
+            tail_frame = self.animation_framer.keyframe_loc["tail"]
+            tail_frame.update({"directory":tail_frame["directory"].format(emotion=emotion)})
+
+            # 2nd Lowest Layer
             body_frame = self.animation_framer.keyframe_loc["body"]
             body_frame.update({"directory":body_frame["directory"].format(emotion=emotion)})
             body_frame.update({"file_names":body_frame["file_names"].format(stance=stance)})
+            
+            # 2nd most Upper Layer
             vr_frame = self.animation_framer.keyframe_loc["VR"]
             vr_frame.update({"directory":vr_frame["directory"].format(emotion=emotion)})
-            tail_frame = self.animation_framer.keyframe_loc["tail"]
-            tail_frame.update({"directory":tail_frame["directory"].format(emotion=emotion)})
-            layering = {"tail":tail_frame,
-                       "body":body_frame,
-                       "VR":vr_frame,
-                       "VR_eyes":{"length":len(vr_eye_animation),"directory":vreyes_loc,"file_names":vr_eye_animation,"current_frame":0}
+
+            # Most Upper Layer
+            vreyes_loc = r".\animation_builder\talk_animation\{emotion}\VR_Eyes".format(emotion=emotion)
+            vr_eye_animation = os.listdir(vreyes_loc)            
+
+            # Layering Dict
+            layering = {
+                        "tail":tail_frame,
+                        "body":body_frame,
+                        "VR":vr_frame,
+                        "VR_eyes":{
+                                    "length":len(vr_eye_animation),
+                                    "directory":vreyes_loc,
+                                    "file_names":vr_eye_animation,
+                                    "current_frame" : 0
+                                  }
                        }
         
         output_frames = self.compile_frames(animation_length = len(vr_eye_animation), 
@@ -300,8 +373,11 @@ class animation_builder(animator_class):
         None.
 
         """
+        
+        # Needs to be rewritten to include the animator module
         if layering is None:
             pass
+        
         vreyes_loc = r".\animation_builder\set_animation\{stance}\VR_Eyes".format(stance=stance)
         vr_loc = r".\animation_builder\set_animation\{stance}\VR".format(stance=stance)
         tail_loc = r".\animation_builder\set_animation\{stance}\Tail".format(stance=stance)
@@ -315,44 +391,88 @@ class animation_builder(animator_class):
         stance_code = "pose_{stance}".format(stance=stance)
         filename = "{Frame}_{item}_{emotion}.png"
         frame_list = ["F01","F02","F03","F04"]
-        item_list_order = {"tail":tail_loc,stance_code:frames_loc,"VR":vr_loc,"VR_Eyes":vreyes_loc}        
-        key_item_list_order={"tail":os.path.join(self.animation_framer.keyframe_loc["tail"]["directory"].format(emotion=emotion),
+
+        item_list_order = {
+                            "tail" : tail_loc,
+                            stance_code : frames_loc,
+                            "VR" : vr_loc,
+                            "VR_Eyes" : vreyes_loc
+                            }        
+
+        key_item_list_order={
+                            "tail":os.path.join(self.animation_framer.keyframe_loc["tail"]["directory"].format(emotion=emotion),
                                                  self.animation_framer.keyframe_loc["tail"]["file_names"]),
-                             "body":os.path.join(self.animation_framer.keyframe_loc["body"]["directory"].format(emotion=emotion),
+
+                            "body":os.path.join(self.animation_framer.keyframe_loc["body"]["directory"].format(emotion=emotion),
                                                  self.animation_framer.keyframe_loc["body"]["file_names"].format(stance=stance)),
-                             "VR":os.path.join(self.animation_framer.keyframe_loc["VR"]["directory"].format(emotion=emotion),
+
+                            "VR":os.path.join(self.animation_framer.keyframe_loc["VR"]["directory"].format(emotion=emotion),
                                                self.animation_framer.keyframe_loc["VR"]["file_names"]),
-                             "VR_Eyes":os.path.join(self.animation_framer.keyframe_loc["VR_eyes"]["directory"].format(emotion=emotion),
-                                                    self.animation_framer.keyframe_loc["VR_eyes"]["file_names"])}
+
+                            "VR_Eyes":os.path.join(self.animation_framer.keyframe_loc["VR_eyes"]["directory"].format(emotion=emotion),
+                                                    self.animation_framer.keyframe_loc["VR_eyes"]["file_names"])
+                            }
         
         img_list = []
         for frame_number in frame_list:
             bkgd = Image.new("RGB",self.animation_framer.img_size, self.animation_framer.bkgd_color)
-            file_name = os.path.join(item_list_order[stance_code],filename.format(Frame=frame_number,item=stance_code,emotion=emotion))
+            file_name = os.path.join(item_list_order[stance_code],
+                                     filename.format(Frame = frame_number,
+                                                     item = stance_code,
+                                                     emotion = emotion
+                                                     )
+                                     )
+
             if os.path.isfile(file_name):
                 for item in item_list_order:
                     # load Item
-                    file_name = os.path.join(item_list_order[item],filename.format(Frame=frame_number,item=item,emotion=emotion))
+                    file_name = os.path.join(item_list_order[item],
+                                             filename.format(Frame = frame_number,
+                                                             item = item,
+                                                             emotion = emotion
+                                                             )
+                                             )
+
                     if os.path.isfile(file_name):
                         for_overlay = Image.open(file_name)
+
                     else:
-                        file_name = os.path.join(item_list_order[item],filename.format(Frame=frame_number,item=item,emotion="Default"))
+                        file_name = os.path.join(item_list_order[item],
+                                                 filename.format(Frame = frame_number,
+                                                                 item = item,
+                                                                 emotion = "Default"
+                                                                 )
+                                                 )
                         for_overlay = Image.open(file_name)
                     
                     bkgd.paste(for_overlay,(0,0),for_overlay)
                     
-            elif os.path.isfile(os.path.join(item_list_order[stance_code],filename.format(
-                    Frame=frame_number,item=list(item_list_order.keys())[1],emotion="Default"))):        
+            elif os.path.isfile(os.path.join(item_list_order[stance_code],
+                                             filename.format(
+                                                        Frame = frame_number,
+                                                        item = list(item_list_order.keys())[1],
+                                                        emotion = "Default"))):        
                 for item in item_list_order:
                     # load Item
-                    file_name = os.path.join(item_list_order[item],filename.format(Frame=frame_number,item=item,emotion=emotion))
+                    file_name = os.path.join(item_list_order[item],
+                                             filename.format(Frame = frame_number,
+                                                             item = item,emotion=emotion
+                                                             )
+                                             )
+
                     if os.path.isfile(file_name):
                         for_overlay = Image.open(file_name)
+                        
                     else:
-                        file_name = os.path.join(item_list_order[item],filename.format(Frame=frame_number,item=item,emotion="Default"))
+                        file_name = os.path.join(item_list_order[item], 
+                                                 filename.format(Frame = frame_number, 
+                                                                 item = item, 
+                                                                 emotion = "Default"
+                                                                 )
+                                                 )
                         for_overlay = Image.open(file_name)
                     
-                    bkgd.paste(for_overlay,(0,0),for_overlay)
+                    bkgd.paste(for_overlay, (0,0), for_overlay)
             else:
                 # load key frames
                 for item in key_item_list_order:
@@ -361,12 +481,14 @@ class animation_builder(animator_class):
                     if os.path.isfile(file_name):
                         for_overlay = Image.open(file_name)
                 
-                    bkgd.paste(for_overlay,(0,0),for_overlay)
-                    
+                    bkgd.paste(for_overlay, (0, 0), for_overlay)
+            
+            # Double append to animate by 2s
             img_list.append(bkgd)
             img_list.append(bkgd)
+            
         #img_list[0].save("an.gif",format="gif",append_images=img_list[1:],optimize=False,save_all=True,duration=64,loop=0)
-        self.generate_video(img_list,"set_{stance}_{emotion}.mp4".format(stance=stance,emotion=emotion))
+        self.generate_video(img_list,"set_{stance}_{emotion}.mp4".format(stance = stance, emotion = emotion))
 
 
 
@@ -375,6 +497,7 @@ if __name__ == "__main__":
     # emotion_list = ["angry","derp","happy","jolly","sigh","surprised","think"]
     # stance_list = ["normal","game","casual"]
     
+    # input names of folder structures
     emotion_list = ["angry"]
     stance_list = ["normal"]
     
@@ -382,8 +505,8 @@ if __name__ == "__main__":
     ab = animation_builder(ac)    
     for emotion in emotion_list:
         for stance in stance_list:
-            ab.build_idle_animation(emotion=emotion,stance=stance)    
-            ab.build_talking_animation(emotion=emotion,stance=stance)
-            ab.build_set_animation(emotion=emotion,stance=stance)
+            ab.build_idle_animation(emotion = emotion, stance = stance)    
+            ab.build_talking_animation(emotion = emotion, stance = stance)
+            ab.build_set_animation(emotion = emotion, stance = stance)
 
 
